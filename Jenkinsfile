@@ -313,23 +313,53 @@ pipeline {
 
     post {
 		always {
-			echo '========== Pipeline Execution Completed =========='
-
-            cleanWs()
-
-            sh 'docker image prune -f || true'
+			script {
+				echo '========== Pipeline Execution Completed =========='
+				
+				// Archive important files if they exist
+				try {
+					archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: true, fingerprint: true
+				} catch (Exception e) {
+					echo "Artifact archiving skipped: ${e.message}"
+				}
+				
+				// Clean Docker images to save space
+				sh '''
+					echo "Cleaning up Docker resources..."
+					docker image prune -f || echo "Docker cleanup skipped"
+				'''
+			}
         }
 
         success {
-			echo '========== Pipeline SUCCESS =========='
+			script {
+				echo '========== ✅ Pipeline SUCCESS =========='
+				echo """
+					Build Summary:
+					- Build Number: ${BUILD_NUMBER}
+					- Build Time: ${new Date()}
+					- Status: SUCCESS
+				"""
+			}
         }
 
         failure {
-			echo '========== Pipeline FAILED =========='
+			script {
+				echo '========== ❌ Pipeline FAILED =========='
+				echo """
+					Build Failed:
+					- Build Number: ${BUILD_NUMBER}
+					- Console Output: ${BUILD_URL}console
+					- Please check logs for errors
+				"""
+			}
         }
 
         unstable {
-			echo '========== Pipeline UNSTABLE =========='
+			script {
+				echo '========== ⚠️ Pipeline UNSTABLE =========='
+				echo "Some tests may have failed. Check test reports."
+			}
         }
     }
 }
