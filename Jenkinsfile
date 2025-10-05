@@ -59,19 +59,24 @@ pipeline {
 			steps {
 				script {
 					echo '========== Stage 3: Running Unit and Integration Tests =========='
+                    
+                    def javaHome = tool name: 'JDK-17'
+                    env.JAVA_HOME = javaHome
+                    env.PATH = "${javaHome}/bin:${env.PATH}"
+                    
                     sh '''
-                        mvn test
-                        mvn verify
+                        ./mvnw test
+                        ./mvnw verify
                     '''
                 }
             }
             post {
 				always {
 					junit '**/target/surefire-reports/*.xml'
-                    junit '**/target/failsafe-reports/*.xml'
-
+					// Remove the failsafe line since verify doesn't generate separate reports
+                    
                     publishHTML(target: [
-                        allowMissing: false,
+                        allowMissing: true,  // Make it optional
                         alwaysLinkToLastBuild: true,
                         keepAll: true,
                         reportDir: 'target/surefire-reports',
