@@ -44,8 +44,9 @@ pipeline {
                         echo "Java version:"
                         java -version
                         
-                        mvn clean compile
-                        mvn package -DskipTests
+                        chmod +x mvnw
+                        ./mvnw clean compile
+                        ./mvnw package -DskipTests
                     '''
 
                     echo 'Build artifacts created successfully'
