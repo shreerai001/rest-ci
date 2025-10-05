@@ -33,7 +33,17 @@ pipeline {
 			steps {
 				script {
 					echo '========== Stage 2: Building Application =========='
+                    
+                    // Explicitly set JAVA_HOME and PATH
+                    def javaHome = tool name: 'JDK-17'
+                    env.JAVA_HOME = javaHome
+                    env.PATH = "${javaHome}/bin:${env.PATH}"
+                    
                     sh '''
+                        echo "JAVA_HOME is: $JAVA_HOME"
+                        echo "Java version:"
+                        java -version
+                        
                         mvn clean compile
                         mvn package -DskipTests
                     '''
@@ -75,6 +85,11 @@ pipeline {
 			steps {
 				script {
 					echo '========== Stage 4: Running Code Quality Analysis with SonarQube =========='
+                    
+                    def javaHome = tool name: 'JDK-17'
+                    env.JAVA_HOME = javaHome
+                    env.PATH = "${javaHome}/bin:${env.PATH}"
+                    
                     withSonarQubeEnv('SonarQube') {
 						sh '''
                             mvn sonar:sonar \
